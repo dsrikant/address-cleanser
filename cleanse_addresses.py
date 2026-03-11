@@ -403,10 +403,8 @@ def build_output_columns(input_columns: list[str]) -> list[str]:
     """Determine the ordered list of output CSV columns.
 
     Order:
-        1. All original input columns (original order)
-        2. concatenated_address
-        3. lp_* component columns (alphabetical)
-        4. Metadata columns
+        1. lp_* component columns (alphabetical)
+        2. Metadata columns
 
     Args:
         input_columns: Column names from the input CSV header.
@@ -414,7 +412,7 @@ def build_output_columns(input_columns: list[str]) -> list[str]:
     Returns:
         Ordered list of output column names.
     """
-    return list(input_columns) + ["concatenated_address"] + LP_OUTPUT_COLUMNS + METADATA_COLUMNS
+    return LP_OUTPUT_COLUMNS + METADATA_COLUMNS
 
 
 def process_csv(args: argparse.Namespace, logger: logging.Logger, postal_parser) -> dict:
