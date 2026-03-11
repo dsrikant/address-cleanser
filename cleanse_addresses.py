@@ -69,6 +69,30 @@ INPUT_ADDRESS_COLUMNS = [
     "country",
 ]
 
+# Named column presets for well-known source schemas.
+# Each preset defines:
+#   column_map        – renames source column → canonical INPUT_ADDRESS_COLUMNS name
+#   passthrough_cols  – source columns to carry through verbatim to the output
+PRESETS: dict[str, dict] = {
+    "alight": {
+        "column_map": {
+            "unf_address_line_1": "address_line_1",
+            "unf_address_line_2": "address_line_2",
+            "unf_address_line_3": "address_line_3",
+            "unf_address_line_4": "address_line_4",
+            "unf_address_line_5": "address_line_5",
+            "unf_city": "city",
+            "unf_state": "state_province",
+            "unf_zip_code": "postal_code",
+            "unf_country": "country",
+        },
+        "passthrough_cols": [
+            "person_client_physical_address_id",
+            "person_client_id",
+        ],
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -135,6 +159,18 @@ def parse_arguments() -> argparse.Namespace:
         metavar="FILE",
         help="Path to log file for errors/warnings (defaults to stderr).",
     )
+    parser.add_argument(
+        "--preset",
+        default=None,
+        choices=list(PRESETS.keys()),
+        metavar="NAME",
+        help=(
+            "Apply a named column mapping preset for a known source schema. "
+            f"Available presets: {', '.join(PRESETS.keys())}. "
+            "The preset renames source columns to the canonical address field names "
+            "and carries key identifier columns through to the output."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -173,6 +209,7 @@ def validate_input_file(
     filepath: str,
     encoding: str,
     delimiter: str,
+    column_map: dict[str, str] | None = None,
 ) -> tuple[list[str], int]:
     """Validate that the input CSV exists, is readable, and contains at least
     one known address column.
@@ -181,6 +218,9 @@ def validate_input_file(
         filepath: Path to the input CSV.
         encoding: File encoding.
         delimiter: CSV delimiter character.
+        column_map: Optional mapping of source column names → canonical names
+            (e.g. from a preset). Applied before checking for known address
+            columns so preset files pass validation.
 
     Returns:
         Tuple of (column_names, row_count).
@@ -207,9 +247,14 @@ def validate_input_file(
             if len(lower_cols) != len(set(lower_cols)):
                 sys.exit("[ERROR] Input CSV contains duplicate column names.")
 
+            # Apply column map so preset files pass the address-column check
+            effective_cols = [
+                (column_map or {}).get(c, c) for c in columns
+            ]
+
             # Require at least one address-related column
             known = set(INPUT_ADDRESS_COLUMNS)
-            if not any(c.lower() in known for c in columns):
+            if not any(c.lower() in known for c in effective_cols):
                 sys.exit(
                     "[ERROR] Input CSV has no recognized address columns. "
                     f"Expected at least one of: {', '.join(INPUT_ADDRESS_COLUMNS)}"
@@ -222,6 +267,24 @@ def validate_input_file(
         sys.exit(f"[ERROR] Cannot read input file: {exc}")
 
     return columns, row_count
+
+
+def apply_column_map(chunk: "pd.DataFrame", column_map: dict[str, str]) -> "pd.DataFrame":
+    """Rename columns in a DataFrame according to the provided mapping.
+
+    Columns absent from the map are left unchanged. This is used to normalise
+    preset-specific source column names to the canonical INPUT_ADDRESS_COLUMNS
+    names before any address processing occurs.
+
+    Args:
+        chunk: Input DataFrame chunk.
+        column_map: Dict of source_column → canonical_column renames.
+
+    Returns:
+        DataFrame with columns renamed according to the map.
+    """
+    rename = {src: dst for src, dst in column_map.items() if src in chunk.columns}
+    return chunk.rename(columns=rename) if rename else chunk
 
 
 def validate_output_path(filepath: str) -> None:
@@ -399,20 +462,31 @@ def _select_columns(row_dict: dict, columns: list[str]) -> dict:
 # Main processing loop
 # ---------------------------------------------------------------------------
 
-def build_output_columns(input_columns: list[str]) -> list[str]:
+def build_output_columns(
+    input_columns: list[str],
+    passthrough_cols: list[str] | None = None,
+) -> list[str]:
     """Determine the ordered list of output CSV columns.
 
     Order:
-        1. lp_* component columns (alphabetical)
-        2. Metadata columns
+        1. Passthrough identifier columns (preset-defined; present in input)
+        2. lp_* component columns (alphabetical)
+        3. Metadata columns
 
     Args:
-        input_columns: Column names from the input CSV header.
+        input_columns: Column names from the input CSV header (after any
+            column-map rename has been applied).
+        passthrough_cols: Optional list of column names to carry through from
+            the input verbatim (e.g. identifier columns from a preset). Only
+            columns that actually exist in input_columns are included.
 
     Returns:
         Ordered list of output column names.
     """
-    return LP_OUTPUT_COLUMNS + METADATA_COLUMNS
+    present_passthrough = [
+        col for col in (passthrough_cols or []) if col in input_columns
+    ]
+    return present_passthrough + LP_OUTPUT_COLUMNS + METADATA_COLUMNS
 
 
 def process_csv(args: argparse.Namespace, logger: logging.Logger, postal_parser) -> dict:
@@ -426,8 +500,16 @@ def process_csv(args: argparse.Namespace, logger: logging.Logger, postal_parser)
     Returns:
         Stats dict with keys: total, success, failed, components_sum, elapsed.
     """
+    # Resolve preset config (empty defaults when no preset is selected)
+    preset_config = PRESETS.get(args.preset, {}) if args.preset else {}
+    column_map: dict[str, str] = preset_config.get("column_map", {})
+    passthrough_cols: list[str] = preset_config.get("passthrough_cols", [])
+
+    if args.preset:
+        logger.info("Using preset: %s", args.preset)
+
     input_columns, row_count = validate_input_file(
-        args.input, args.encoding, args.delimiter
+        args.input, args.encoding, args.delimiter, column_map=column_map
     )
     validate_output_path(args.output)
 
@@ -435,16 +517,16 @@ def process_csv(args: argparse.Namespace, logger: logging.Logger, postal_parser)
     logger.info("Found %s rows to process", f"{row_count:,}")
     logger.info("Initializing Libpostal parser...")
 
-    # Determine which address columns are present (case-insensitive lookup)
-    lower_to_original = {c.lower(): c for c in input_columns}
+    # After applying the column map, derive which address columns are present.
+    # input_columns still holds the original CSV headers; effective_columns
+    # reflects what the DataFrame will look like after renaming.
+    effective_columns = [column_map.get(c, c) for c in input_columns]
+    lower_to_original = {c.lower(): c for c in effective_columns}
     present_address_cols = [
         col for col in INPUT_ADDRESS_COLUMNS if col in lower_to_original
     ]
-    # Normalise row access: map lowercase to the actual column header as-is
-    # (pandas will use the original header names, so we work with lowercase col
-    #  names for detection and original names for access)
 
-    output_columns = build_output_columns(input_columns)
+    output_columns = build_output_columns(effective_columns, passthrough_cols=passthrough_cols)
 
     stats = {
         "total": 0,
@@ -480,6 +562,9 @@ def process_csv(args: argparse.Namespace, logger: logging.Logger, postal_parser)
             encoding=args.encoding,
             delimiter=args.delimiter,
         ):
+            # Apply preset column renames before any processing
+            if column_map:
+                chunk = apply_column_map(chunk, column_map)
             batch_num += 1
             chunk_start = stats["total"] + 1
             chunk_end = stats["total"] + len(chunk)
