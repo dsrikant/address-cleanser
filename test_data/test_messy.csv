@@ -1,0 +1,4 @@
+id,address_line_1,address_line_2,address_line_3,address_line_4,address_line_5
+1,123 Main St,Apt 4B,Building C,Floor 2,New York NY 10001
+2,,,,,
+3,Not an address - this is a comment,,,

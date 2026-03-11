@@ -1,0 +1,21 @@
+address_line_1,address_line_2,address_line_3,address_line_4,address_line_5,city,state_province,postal_code,country,concatenated_address,lp_category,lp_city,lp_city_district,lp_country,lp_country_region,lp_entrance,lp_house,lp_house_number,lp_island,lp_level,lp_near,lp_po_box,lp_postcode,lp_road,lp_staircase,lp_state,lp_state_district,lp_suburb,lp_unit,lp_world_region,lp_components_count,lp_parsing_success,lp_parsing_error
+123 Maple St,Apt 4B,,,,Toronto,ON,M5H 2N2,Canada,"123 Maple St, Apt 4B, Toronto, ON, M5H 2N2, Canada",,toronto,,canada,,,,123,,,,,m5h 2n2,maple st,,on,,,apt 4b,,7,True,
+555-0199,John Doe,01/01/1985,,,New York,NY,10001,USA,"555-0199, John Doe, 01/01/1985, New York, NY, 10001, USA",,york,,usa,,,,555-0199 01/01/1985,,,,,10001,john doe new,,ny,,,,,6,True,
+221B Baker St,,,,,London,,NW1 6XE,UK,"221B Baker St, London, NW1 6XE, UK",,,,,,,,,,,,,,,,,,,,,0,False,Parameter must be bytes or unicode
+456-78-1234,Urgent Delivery,Gate code 1234,,,Chicago,IL,ABCDE,United States,"456-78-1234, Urgent Delivery, Gate code 1234, Chicago, IL, ABCDE, United States",,chicago,,united states,,,456-78-1234 urgent delivery gate code 1234,,,,,,abcde,,,il,,,,,5,True,
+10-1-1 Oshiage,Sumida City,,,,Tokyo,,131-8139,Japan,"10-1-1 Oshiage, Sumida City, Tokyo, 131-8139, Japan",,tokyo,oshiage sumida city,japan,,,,10-1-1,,,,,131-8139,,,,,,,,5,True,
+Please leave on the porch,behind the bin,I am not home,,,Seattle,WA,98101,US,"Please leave on the porch, behind the bin, I am not home, Seattle, WA, 98101, US",,,,,,,,,,,,,,,,,,,,,0,False,Parameter must be bytes or unicode
+742 Evergreen Ter,,,,,Springfield,IL,62704,USA,"742 Evergreen Ter, Springfield, IL, 62704, USA",,springfield,,usa,,,,742,,,,,62704,evergreen ter,,il,,,,,6,True,
+999999999,12/12/1990,random_word_banana,,,Pris,Frnce,75001,France,"999999999, 12/12/1990, random_word_banana, Pris, Frnce, 75001, France",,,,france,,,,12/12/1990,,,,,75001,999999999 random_word_banana pris frnce,,,,,,,4,True,
+Av. de la Constitución,s/n,,,,Sevilla,,41004,Spain,"Av. de la Constitución, s/n, Sevilla, 41004, Spain",,sevilla,,spain,,,,s/n,,,,,41004,av. de la constitución,,,,,,,5,True,
+55 Main St,Apartment,888-555-0000,,,Berlinn,DE,10117,Germny,"55 Main St, Apartment, 888-555-0000, Berlinn, DE, 10117, Germny",,berlinn germny,,de,,,,55,,,,,10117,main st,,,,,apartment 888-555-0000,,6,True,
+Rue de Rivoli,,,,,Paris,,75001,France,"Rue de Rivoli, Paris, 75001, France",,paris,,france,,,,,,,,,75001,rue de rivoli,,,,,,,4,True,
+123000456,DO NOT KNOCK,BABY SLEEPING,,,Austin,TX,78701,USA,"123000456, DO NOT KNOCK, BABY SLEEPING, Austin, TX, 78701, USA",,austin,,usa,,,123000456 do not knock baby sleeping,,,,,,78701,,,tx,,,,,5,True,
+"Via Condotti, 10",,,,,Roma,RM,187,Italy,"Via Condotti, 10, Roma, RM, 187, Italy",,roma,,italy,,,,10,,,,,,via condotti,,,rm 187,,,,5,True,
+"Smith, Jane",05-May-1978,101010101,,,Sydney,NSW,Australia,2000,"Smith, Jane, 05-May-1978, 101010101, Sydney, NSW, Australia, 2000",,sydney,,australia,,,,,,,,,05-may-1978 2000,smith jane,,nsw,,101010101,,,6,True,
+George St,,,,,Sydney,NSW,2000,Australia,"George St, Sydney, NSW, 2000, Australia",,,,australia,,,,,,,,,2000,george st,,nsw,,sydney,,,5,True,
+XXXXXXXXX,Word,Another Word,,,London,UK,123,England,"XXXXXXXXX, Word, Another Word, London, UK, 123, England",,london,,uk,,,xxxxxxxxx word another word,,,,,,123,,,england,,,,,5,True,
+Bundeskantleramt,Willy-Brandt-Straße 1,,,,Berlin,,10557,Germany,"Bundeskantleramt, Willy-Brandt-Straße 1, Berlin, 10557, Germany",,berlin,,germany,,,bundeskantleramt,1,,,,,10557,willy-brandt-straße,,,,,,,6,True,
+1600 Pennsylvania,444-222-3333,SSN: 000-11-2222,,,D.C.,Wash.,20500,USA,"1600 Pennsylvania, 444-222-3333, SSN: 000-11-2222, D.C., Wash., 20500, USA",,,,usa,,,ssn 000-11-2222 d.c. wash.,1600 444-222-3333,,,,,20500,pennsylvania,,,,,,,5,True,
+Place du Casino,,,,,Monte Carlo,,98000,Monaco,"Place du Casino, Monte Carlo, 98000, Monaco",,,,monaco,,,,,,,,,98000,place du casino monte carlo,,,,,,,3,True,
+1 High St,,,,,Dublin,IE,WRONG_ZIP,Irlnd,"1 High St, Dublin, IE, WRONG_ZIP, Irlnd",,dublin,,,,,ie wrong_zip irlnd,1,,,,,,high st,,,,,,,4,True,
